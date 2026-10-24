@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HoopzAnimeEvent — Link Generator</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0f0f1a;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.card {
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 560px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+h1 { font-size: 20px; margin-bottom: 6px; color: #fff; }
+.sub { color: #888; font-size: 13px; margin-bottom: 24px; }
+label {
+  display: block;
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+input {
+  width: 100%;
+  background: #0f0f1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+input:focus { outline: none; border-color: #e94560; }
+.btn {
+  background: linear-gradient(135deg, #e94560, #c73e54);
+  color: #fff;
+  border: none;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 4px;
+}
+.btn:hover { filter: brightness(1.1); }
+.btn.secondary {
+  background: #2a2a4a;
+  margin-top: 10px;
+}
+.result {
+  margin-top: 24px;
+  padding: 16px;
+  background: #0f0f1a;
+  border-radius: 10px;
+  border: 1px solid #2a2a4a;
+  display: none;
+}
+.result label { margin-bottom: 8px; }
+.linkbox {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  word-break: break-all;
+  color: #7ec8e3;
+  margin-bottom: 12px;
+  user-select: all;
+}
+.copy-btn {
+  background: #0f3460;
+  color: #7ec8e3;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  font-size: 13px;
+}
+.copy-btn:hover { background: #1a4a7a; }
+.note {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.55;
+}
+.ok { color: #69f0ae; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>HoopzAnimeEvent Link Generator</h1>
+  <p class="sub">Paste the full HTTPS URL of your hosted HoopzAnimeEvent.html, then generate a clean invite link.</p>
+
+  <label>Full HTTPS URL of HoopzAnimeEvent.html</label>
+  <input type="text" id="baseUrl" placeholder="https://yourname.github.io/HoopzAnimeEvent.html" value="">
+
+  <button class="btn" onclick="generate()">Generate Clean Link</button>
+
+  <div class="result" id="result">
+    <label>Invite link (copy this)</label>
+    <div class="linkbox" id="linkOut"></div>
+    <button class="copy-btn" onclick="copyLink()">Copy to clipboard</button>
+    <p class="note">
+      <span class="ok">Must be https://</span> and a top-level page (not inside an iframe).<br><br>
+      Quick free hosts that work:<br>
+      • GitHub Pages<br>
+      • Netlify Drop (drag & drop the html)<br>
+      • Cloudflare Pages<br>
+      • tiiny.host
+    </p>
+  </div>
+</div>
+
+<script>
+function generate() {
+  let base = document.getElementById("baseUrl").value.trim();
+  if (!base) {
+    alert("Paste the full URL where HoopzAnimeEvent.html is hosted");
+    return;
+  }
+
+  // force https if they forgot
+  if (base.startsWith("http://")) {
+    base = "https://" + base.slice(7);
+  }
+  if (!base.startsWith("https://") && !base.startsWith("http://")) {
+    base = "https://" + base;
+  }
+
+  // remove trailing slash and any existing query
+  base = base.split("?")[0].replace(/\/$/, "");
+
+  // if they only pasted the folder, append the filename
+  if (!base.toLowerCase().endsWith(".html")) {
+    base = base + "/HoopzAnimeEvent.html";
+  }
+
+  // clean link — just the page, no extra junk params
+  const link = base;
+
+  document.getElementById("linkOut").textContent = link;
+  document.getElementById("result").style.display = "block";
+}
+
+function copyLink() {
+  const text = document.getElementById("linkOut").textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector(".copy-btn");
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = "Copy to clipboard", 1500);
+  });
+}
+</script>
+</body>
+</html>
